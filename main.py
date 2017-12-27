@@ -16,6 +16,7 @@ def on_connect(client, userdata, flags, rc):
     print("Connected with result code "+str(rc))
 
     client.subscribe("radio")
+    client.subscribe("volume")
 
 def playStation(name):
 	if name in stations:
@@ -37,12 +38,22 @@ def stopRadio():
 	    Popen(["kill", str(mPID)])
 	    mPID = 0
 
+def setVolume(vol):
+    print('Volume: ', vol)
+    Popen(["amixer", "cset", "numid=3", vol+"%"])
+
 def on_message(client, userdata, msg):
     	print(msg.topic+" "+str(msg.payload))
-        if msg.payload == 'stop':
-            stopRadio()
+        
+        if msg.topic == 'radio':
+            if msg.payload == 'stop':
+                stopRadio()
+            else:
+                playStation(msg.payload)
+        elif msg.topic == 'volume':
+            setVolume(msg.payload)
         else:
-	    playStation(msg.payload)
+            print('Not recognised topic: ', msg.topic)
 
 client= mqtt.Client("rpi_b_central")
 client.on_connect = on_connect
